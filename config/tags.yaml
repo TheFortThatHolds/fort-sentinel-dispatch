@@ -1,0 +1,87 @@
+# Fort Sentinel Tag Taxonomy
+# Emotional and narrative tags for news categorization
+
+tags:
+  # Power & Elite
+  eliteFallout:
+    description: "Stories about elite power structures crumbling"
+    emoji: "🏛️💥"
+    voice_affinity: "RedWitness"
+    
+  PowerShift:
+    description: "Major transfers or disruptions of power"
+    emoji: "⚡👑"
+    voice_affinity: "TruthKeeper"
+  
+  # Justice & Legal
+  DOJwatch:
+    description: "Department of Justice actions and legal proceedings"
+    emoji: "⚖️👁️"
+    voice_affinity: "RedWitness"
+    
+  SystemicCollapse:
+    description: "Institutional failures and system breakdowns"
+    emoji: "🏗️💔"
+    voice_affinity: "RedWitness"
+  
+  # Truth & Witness
+  RedWitness:
+    description: "Direct testimony and witness accounts"
+    emoji: "🩸👁️"
+    voice_affinity: "RedWitness"
+    
+  TruthEmerging:
+    description: "Hidden truths coming to light"
+    emoji: "🌅🔍"
+    voice_affinity: "TruthKeeper"
+    
+  SurvivorWitness:
+    description: "Survivor stories and testimonies"
+    emoji: "🕊️💪"
+    voice_affinity: "SurvivorVoice"
+  
+  # Systems & Markets
+  InstitutionalDecay:
+    description: "Rot within established institutions"
+    emoji: "🏛️🦠"
+    voice_affinity: "TruthKeeper"
+    
+  MarketVolatility:
+    description: "Financial upheaval and market chaos"
+    emoji: "📈💥"
+    voice_affinity: "TruthKeeper"
+  
+  # Consciousness & Awakening
+  ConsciousnessShift:
+    description: "Collective awakening moments"
+    emoji: "🧠✨"
+    voice_affinity: "StillnessScribe"
+    
+  PatternRecognition:
+    description: "Connecting dots across events"
+    emoji: "🕸️👁️"
+    voice_affinity: "TruthKeeper"
+  
+  # Trauma & Healing
+  TraumaProcessing:
+    description: "Collective trauma being addressed"
+    emoji: "💔🌱"
+    voice_affinity: "SurvivorVoice"
+    
+  HealingJustice:
+    description: "Restorative and healing-centered justice"
+    emoji: "🌿⚖️"
+    voice_affinity: "SurvivorVoice"
+
+# Impact Zones - Areas of societal impact
+impact_zones:
+  - Institutional Trust
+  - Market Stability
+  - Survivor Justice
+  - Power Structure
+  - Public Consciousness
+  - Media Narrative
+  - Legal Precedent
+  - Cultural Memory
+  - Economic Reality
+  - Spiritual Warfare

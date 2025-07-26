@@ -1,0 +1,7 @@
+<!-- Placeholder for icon - in production, create actual PNG icon -->
+<!-- For now, using SVG data URL as placeholder -->
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#1a1a1a"/>
+  <text x="96" y="96" text-anchor="middle" font-family="serif" font-size="120" fill="#8b0000" dominant-baseline="middle">F</text>
+  <text x="96" y="140" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#fff">SENTINEL</text>
+</svg>

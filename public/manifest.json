@@ -1,0 +1,37 @@
+{
+  "name": "Fort Sentinel Dispatch",
+  "short_name": "Fort Dispatch",
+  "description": "AI-augmented news briefings with emotional intelligence",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1a1a",
+  "theme_color": "#8b0000",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["news", "education"],
+  "shortcuts": [
+    {
+      "name": "Latest Dispatch",
+      "url": "/latest",
+      "description": "Read today's dispatch"
+    },
+    {
+      "name": "Search News",
+      "url": "/search",
+      "description": "Search for specific topics"
+    }
+  ]
+}

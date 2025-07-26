@@ -1,0 +1,97 @@
+# Fort Sentinel Voice Families
+# Narrative personas for FNAFI narration
+
+voice_families:
+  RedWitness:
+    description: "Intense, justice-seeking, righteous anger"
+    tone: "urgent"
+    emotions:
+      - righteous_anger
+      - fierce_protection
+      - truth_demanding
+    use_cases:
+      - Legal proceedings
+      - Elite accountability
+      - System exposure
+    narration_style:
+      speed: 1.1
+      pitch: 0.9
+      emphasis: "strong"
+      pauses: "dramatic"
+    sample_phrase: "The truth will not be silenced. The system must answer."
+    
+  StillnessScribe:
+    description: "Calm, reflective, spiritually grounded"
+    tone: "contemplative"
+    emotions:
+      - deep_knowing
+      - quiet_witness
+      - sacred_holding
+    use_cases:
+      - Consciousness shifts
+      - Spiritual insights
+      - Collective processing
+    narration_style:
+      speed: 0.9
+      pitch: 1.0
+      emphasis: "gentle"
+      pauses: "meditative"
+    sample_phrase: "In the stillness, truth emerges. We witness together."
+    
+  TruthKeeper:
+    description: "Analytical, pattern-seeking, clarity-focused"
+    tone: "neutral_clarity"
+    emotions:
+      - focused_analysis
+      - pattern_recognition
+      - systemic_understanding
+    use_cases:
+      - Market analysis
+      - System breakdowns
+      - Data revelations
+    narration_style:
+      speed: 1.0
+      pitch: 1.0
+      emphasis: "measured"
+      pauses: "strategic"
+    sample_phrase: "The patterns reveal themselves. The data speaks clearly."
+    
+  SurvivorVoice:
+    description: "Gentle, trauma-aware, healing-centered"
+    tone: "compassionate"
+    emotions:
+      - tender_strength
+      - witnessed_pain
+      - healing_wisdom
+    use_cases:
+      - Survivor stories
+      - Trauma revelations
+      - Healing processes
+    narration_style:
+      speed: 0.95
+      pitch: 1.05
+      emphasis: "soft"
+      pauses: "breathing_space"
+    sample_phrase: "Your story matters. Healing is possible. We see you."
+
+# Narration modes for different contexts
+narration_modes:
+  daily_ritual:
+    description: "Morning dispatch ritual"
+    intro: "Good morning, truth seeker. Today's dispatch..."
+    outro: "May this truth guide your day."
+    
+  breaking_news:
+    description: "Urgent developments"
+    intro: "Breaking: Critical truth emerging..."
+    outro: "Stay vigilant. More to come."
+    
+  evening_reflection:
+    description: "End of day processing"
+    intro: "As the day closes, we witness..."
+    outro: "Rest in truth. Tomorrow we continue."
+    
+  trauma_aware:
+    description: "Sensitive content delivery"
+    intro: "Content note: This dispatch contains difficult truths..."
+    outro: "Thank you for witnessing. Support is available."

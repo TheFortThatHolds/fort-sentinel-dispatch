@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#8b0000">
+  <meta name="description" content="AI-augmented news briefings with emotional intelligence">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fort Dispatch">
+  
+  <title>Fort Sentinel Dispatch</title>
+  
+  <!-- PWA Links -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'serif': ['Crimson Text', 'serif'],
+            'sans': ['Inter', 'sans-serif'],
+          },
+          colors: {
+            'fort-red': '#8b0000',
+            'fort-black': '#1a1a1a',
+            'fort-gray': '#2a2a2a',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* PWA Styles */
+    body {
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    
+    /* iOS Safe Areas */
+    .safe-top {
+      padding-top: env(safe-area-inset-top);
+    }
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #8b0000;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-fort-black text-white">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    // API Service
+    const API = {
+      baseURL: window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/api',
+      
+      async fetchNews(topic, isGeneral = false, country = 'us', category = null) {
+        const endpoint = `${this.baseURL}/fetch-news`;
+        const params = new URLSearchParams({
+          topic: topic || '',
+          general: isGeneral,
+          country,
+          ...(category && { category })
+        });
+        
+        const response = await fetch(`${endpoint}?${params}`, {
+          headers: {
+            'X-API-Key': localStorage.getItem('newsapi_key') || ''
+          }
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to fetch news');
+        }
+        
+        return response.json();
+      },
+      
+      async generateDispatch(articleId) {
+        const response = await fetch(`${this.baseURL}/generate-dispatch`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': localStorage.getItem('newsapi_key') || ''
+          },
+          body: JSON.stringify({ article_id: articleId })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate dispatch');
+        }
+        
+        return response.json();
+      },
+      
+      async getDispatches(tag = null, date = null) {
+        const params = new URLSearchParams();
+        if (tag) params.append('tag', tag);
+        if (date) params.append('date', date);
+        
+        const response = await fetch(`${this.baseURL}/dispatches?${params}`);
+        return response.json();
+      }
+    };
+    
+    // Components
+    function ApiKeyModal({ isOpen, onClose, onSave }) {
+      const [apiKey, setApiKey] = useState('');
+      
+      if (!isOpen) return null;
+      
+      const handleSave = () => {
+        localStorage.setItem('newsapi_key', apiKey);
+        onSave();
+        onClose();
+      };
+      
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-fort-gray rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-2xl font-serif mb-4">Add NewsAPI Key</h2>
+            <p className="text-gray-400 mb-4">
+              Get your free API key from{' '}
+              <a href="https://newsapi.org" target="_blank" className="text-fort-red underline">
+                newsapi.org
+              </a>
+            </p>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your API key"
+              className="w-full bg-fort-black border border-gray-600 rounded px-3 py-2 mb-4"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-fort-red text-white py-2 rounded font-semibold"
+              >
+                Save Key
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-700 text-white py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    function SearchBar({ onSearch }) {
+      const [query, setQuery] = useState('');
+      const [mode, setMode] = useState('topic');
+      
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSearch(query, mode === 'general');
+      };
+      
+      return (
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => setMode('topic')}
+              className={`px-3 py-1 rounded ${mode === 'topic' ? 'bg-fort-red' : 'bg-gray-700'}`}
+            >
+              Topic Search
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('general')}
+              className={`px-3 py-1 rounded ${mode === 'general' ? 'bg-fort-red' : 'bg-gray-700'}`}
+            >
+              Top Headlines
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={mode === 'topic' ? "Search any topic..." : "Country code (us, uk, ca...)"}
+              className="flex-1 bg-fort-gray border border-gray-600 rounded-lg px-4 py-3 text-white"
+            />
+            <button
+              type="submit"
+              className="bg-fort-red text-white px-6 py-3 rounded-lg font-semibold"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      );
+    }
+    
+    function ArticleCard({ article, onGenerate }) {
+      const [isGenerating, setIsGenerating] = useState(false);
+      
+      const handleGenerate = async () => {
+        setIsGenerating(true);
+        try {
+          await onGenerate(article.id);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+      
+      return (
+        <div className="bg-fort-gray rounded-lg p-4 mb-4">
+          <h3 className="font-serif text-xl mb-2">{article.title}</h3>
+          <p className="text-gray-400 text-sm mb-2">{article.source} • {new Date(article.publishedAt).toLocaleDateString()}</p>
+          <p className="text-gray-300 mb-4">{article.description}</p>
+          <div className="flex gap-2">
+            <a
+              href={article.url}
+              target="_blank"
+              className="text-fort-red underline text-sm"
+            >
+              Read Original →
+            </a>
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="ml-auto bg-fort-red text-white px-4 py-1 rounded text-sm disabled:opacity-50"
+            >
+              {isGenerating ? 'Generating...' : 'Generate Dispatch'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    function DispatchView({ dispatch }) {
+      return (
+        <div className="bg-fort-gray rounded-lg p-6 mb-4">
+          <div className="flex items-start justify-between mb-4">
+            <h3 className="font-serif text-2xl flex-1">{dispatch.title}</h3>
+            <span className="bg-fort-red text-white px-2 py-1 rounded text-xs">
+              {dispatch.voice}
+            </span>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">🧠 Fort Frame</h4>
+            <p className="text-gray-300 italic">{dispatch.fort_frame}</p>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">📰 Summary</h4>
+            <p className="text-gray-300">{dispatch.summary}</p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {dispatch.tags.map((tag, i) => (
+              <span key={i} className="bg-gray-700 px-2 py-1 rounded text-xs">
+                {tag}
+              </span>
+            ))}
+          </div>
+          
+          <div className="flex gap-2 text-sm">
+            <a href={dispatch.url} target="_blank" className="text-fort-red underline">
+              Read Full →
+            </a>
+            {dispatch.fnafi_command && (
+              <button className="ml-auto bg-gray-700 px-3 py-1 rounded text-xs">
+                🎧 Play Audio
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    function App() {
+      const [view, setView] = useState('search');
+      const [articles, setArticles] = useState([]);
+      const [dispatches, setDispatches] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [showApiModal, setShowApiModal] = useState(false);
+      
+      useEffect(() => {
+        // Check if API key exists
+        if (!localStorage.getItem('newsapi_key')) {
+          setShowApiModal(true);
+        }
+        
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/service-worker.js');
+        }
+      }, []);
+      
+      const handleSearch = async (query, isGeneral) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const data = await API.fetchNews(query, isGeneral);
+          setArticles(data.articles);
+          setView('articles');
+        } catch (err) {
+          setError(err.message);
+          if (err.message.includes('API key')) {
+            setShowApiModal(true);
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      const handleGenerateDispatch = async (articleId) => {
+        try {
+          const dispatch = await API.generateDispatch(articleId);
+          setDispatches([dispatch, ...dispatches]);
+          setView('dispatches');
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+      
+      return (
+        <div className="min-h-screen bg-fort-black safe-top safe-bottom">
+          {/* Header */}
+          <header className="bg-fort-gray border-b border-gray-700 sticky top-0 z-10">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <h1 className="font-serif text-2xl text-fort-red">Fort Sentinel Dispatch</h1>
+                <button
+                  onClick={() => setShowApiModal(true)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ⚙️
+                </button>
+              </div>
+              <nav className="flex gap-4 mt-2">
+                <button
+                  onClick={() => setView('search')}
+                  className={`pb-1 border-b-2 ${view === 'search' ? 'border-fort-red' : 'border-transparent'}`}
+                >
+                  Search
+                </button>
+                <button
+                  onClick={() => setView('articles')}
+                  className={`pb-1 border-b-2 ${view === 'articles' ? 'border-fort-red' : 'border-transparent'}`}
+                >
+                  Articles ({articles.length})
+                </button>
+                <button
+                  onClick={() => setView('dispatches')}
+                  className={`pb-1 border-b-2 ${view === 'dispatches' ? 'border-fort-red' : 'border-transparent'}`}
+                >
+                  Dispatches ({dispatches.length})
+                </button>
+              </nav>
+            </div>
+          </header>
+          
+          {/* Main Content */}
+          <main className="container mx-auto px-4 py-6">
+            {error && (
+              <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 mb-4">
+                {error}
+              </div>
+            )}
+            
+            {loading && (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-fort-red"></div>
+              </div>
+            )}
+            
+            {view === 'search' && (
+              <>
+                <SearchBar onSearch={handleSearch} />
+                <div className="text-gray-400 text-sm">
+                  <p className="mb-2">Try searching for:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['climate change', 'artificial intelligence', 'housing crisis', 'cryptocurrency'].map(topic => (
+                      <button
+                        key={topic}
+                        onClick={() => handleSearch(topic, false)}
+                        className="bg-gray-800 px-3 py-1 rounded hover:bg-gray-700"
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {view === 'articles' && (
+              <div>
+                {articles.map((article, i) => (
+                  <ArticleCard
+                    key={i}
+                    article={{ ...article, id: i }}
+                    onGenerate={handleGenerateDispatch}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {view === 'dispatches' && (
+              <div>
+                {dispatches.map((dispatch, i) => (
+                  <DispatchView key={i} dispatch={dispatch} />
+                ))}
+              </div>
+            )}
+          </main>
+          
+          {/* API Key Modal */}
+          <ApiKeyModal
+            isOpen={showApiModal}
+            onClose={() => setShowApiModal(false)}
+            onSave={() => window.location.reload()}
+          />
+        </div>
+      );
+    }
+    
+    // Mount React app
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

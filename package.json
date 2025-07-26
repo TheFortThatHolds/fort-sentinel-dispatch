@@ -1,0 +1,14 @@
+{
+  "name": "fort-sentinel-dispatch",
+  "version": "1.0.0",
+  "description": "AI-augmented news briefings with emotional intelligence",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "python app.py",
+    "build": "echo 'Static build complete'",
+    "install": "pip install -r requirements.txt"
+  },
+  "keywords": ["news", "ai", "pwa", "journalism"],
+  "author": "Fort Collective",
+  "license": "MIT"
+}
