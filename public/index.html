@@ -82,20 +82,39 @@
     
     // API Service
     const API = {
-      baseURL: window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/api',
+      baseURL: window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://newsapi.org/v2',
       
       async fetchNews(topic, isGeneral = false, country = 'us', category = null) {
-        const endpoint = `${this.baseURL}/fetch-news`;
-        const params = new URLSearchParams({
-          topic: topic || '',
-          general: isGeneral,
-          country,
-          ...(category && { category })
-        });
+        const apiKey = localStorage.getItem('newsapi_key');
+        if (!apiKey) {
+          throw new Error('NewsAPI key required. Please add your API key in settings.');
+        }
+        
+        let endpoint, params;
+        
+        if (isGeneral) {
+          endpoint = `${this.baseURL}/top-headlines`;
+          params = new URLSearchParams({
+            country,
+            pageSize: '10',
+            ...(category && { category })
+          });
+        } else {
+          if (!topic) {
+            throw new Error('Topic required for search');
+          }
+          endpoint = `${this.baseURL}/everything`;
+          params = new URLSearchParams({
+            q: topic,
+            language: 'en',
+            sortBy: 'relevancy',
+            pageSize: '10'
+          });
+        }
         
         const response = await fetch(`${endpoint}?${params}`, {
           headers: {
-            'X-API-Key': localStorage.getItem('newsapi_key') || ''
+            'X-API-Key': apiKey
           }
         });
         
@@ -104,33 +123,88 @@
           throw new Error(error.message || 'Failed to fetch news');
         }
         
-        return response.json();
+        const data = await response.json();
+        return { articles: data.articles || [] };
       },
       
-      async generateDispatch(articleId) {
-        const response = await fetch(`${this.baseURL}/generate-dispatch`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': localStorage.getItem('newsapi_key') || ''
-          },
-          body: JSON.stringify({ article_id: articleId })
-        });
+      async generateDispatch(article) {
+        // Client-side Fort analysis (basic version)
+        const analysis = this.analyzeArticle(article);
         
-        if (!response.ok) {
-          throw new Error('Failed to generate dispatch');
+        return {
+          title: article.title,
+          summary: analysis.summary,
+          fort_frame: analysis.fort_frame,
+          tags: analysis.tags,
+          voice: analysis.voice_family,
+          impact_zones: analysis.impact_zones,
+          url: article.url,
+          filepath: null,
+          fnafi_command: null
+        };
+      },
+      
+      analyzeArticle(article) {
+        const title = article.title.toLowerCase();
+        const content = (article.description || '').toLowerCase();
+        
+        // Simple keyword-based analysis
+        let tags = [];
+        let voice = 'TruthKeeper';
+        
+        if (title.includes('court') || title.includes('legal') || title.includes('justice')) {
+          tags.push('DOJwatch');
+          voice = 'RedWitness';
+        }
+        if (title.includes('climate') || title.includes('environment')) {
+          tags.push('TruthEmerging');
+        }
+        if (title.includes('tech') || title.includes('ai') || title.includes('artificial intelligence')) {
+          tags.push('PowerShift');
+        }
+        if (title.includes('economy') || title.includes('market') || title.includes('financial')) {
+          tags.push('MarketVolatility');
+        }
+        if (!tags.length) {
+          tags.push('TruthEmerging');
         }
         
-        return response.json();
+        return {
+          summary: article.description || 'Breaking news development requiring attention.',
+          fort_frame: 'Another layer of the narrative reveals itself. Truth emerges through the cracks in official stories.',
+          tags: tags.slice(0, 3),
+          voice_family: voice,
+          impact_zones: ['Public Consciousness', 'Institutional Trust']
+        };
       },
       
       async getDispatches(tag = null, date = null) {
-        const params = new URLSearchParams();
-        if (tag) params.append('tag', tag);
-        if (date) params.append('date', date);
+        // Return dispatches from localStorage for now
+        const dispatches = JSON.parse(localStorage.getItem('fort_dispatches') || '[]');
         
-        const response = await fetch(`${this.baseURL}/dispatches?${params}`);
-        return response.json();
+        let filtered = dispatches;
+        if (tag) {
+          filtered = filtered.filter(d => d.tags.includes(tag));
+        }
+        if (date) {
+          filtered = filtered.filter(d => d.date === date);
+        }
+        
+        return { dispatches: filtered };
+      },
+      
+      saveDispatch(dispatch) {
+        const dispatches = JSON.parse(localStorage.getItem('fort_dispatches') || '[]');
+        dispatch.date = new Date().toISOString().split('T')[0];
+        dispatch.timestamp = new Date().toISOString();
+        dispatches.unshift(dispatch);
+        
+        // Keep only last 50 dispatches
+        if (dispatches.length > 50) {
+          dispatches.splice(50);
+        }
+        
+        localStorage.setItem('fort_dispatches', JSON.stringify(dispatches));
       }
     };
     
@@ -234,7 +308,7 @@
       const handleGenerate = async () => {
         setIsGenerating(true);
         try {
-          await onGenerate(article.id);
+          await onGenerate(article);
         } finally {
           setIsGenerating(false);
         }
@@ -344,9 +418,10 @@
         }
       };
       
-      const handleGenerateDispatch = async (articleId) => {
+      const handleGenerateDispatch = async (article) => {
         try {
-          const dispatch = await API.generateDispatch(articleId);
+          const dispatch = await API.generateDispatch(article);
+          API.saveDispatch(dispatch);
           setDispatches([dispatch, ...dispatches]);
           setView('dispatches');
         } catch (err) {
@@ -430,7 +505,7 @@
                 {articles.map((article, i) => (
                   <ArticleCard
                     key={i}
-                    article={{ ...article, id: i }}
+                    article={article}
                     onGenerate={handleGenerateDispatch}
                   />
                 ))}
