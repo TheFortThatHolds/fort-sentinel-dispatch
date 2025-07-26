@@ -10,25 +10,34 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
       
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
       - name: Build static PWA
         run: |
           # Copy public files to _site for GitHub Pages
           mkdir -p _site
           cp -r public/* _site/
           
-          # Update API base URL for GitHub Pages
-          sed -i "s|window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/api'|'https://fort-dispatch-api.vercel.app'|g" _site/index.html
-          
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
       
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        id: deployment
+        uses: actions/deploy-pages@v4
